@@ -1,0 +1,25 @@
+name = "healthcare-insurance-analyzer"
+main = "src/index.js"
+compatibility_date = "2025-04-21"
+
+[site]
+bucket = "./public"
+
+[env.production]
+workers_dev = false
+routes = [
+  { pattern = "healthcare-analyzer.example.com", custom_domain = true }
+]
+
+[env.development]
+workers_dev = true
+
+# KV Namespace for storing settings and small datasets
+[[kv_namespaces]]
+binding = "HEALTH_INSURANCE_DATA"
+id = "366ea9488c95404e80db8d1a94cb318b" # Production KV namespace ID
+preview_id = "366ea9488c95404e80db8d1a94cb318b" # Using same ID for preview/testing
+
+# Set max size for uploads to handle large Excel and PDF files
+[limits]
+upload_size = "10MB"
