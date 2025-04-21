@@ -23,3 +23,4 @@ preview_id = "366ea9488c95404e80db8d1a94cb318b" # Using same ID for preview/test
 # Set max size for uploads to handle large Excel and PDF files
 [limits]
 upload_size = "10MB"
+cpu_ms = 50 # Adding CPU time limit in milliseconds
