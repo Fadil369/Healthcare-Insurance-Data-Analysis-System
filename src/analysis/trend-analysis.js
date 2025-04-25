@@ -23,71 +23,7 @@ export async function analyzeTrends(request) {
     }
     
     // Process data and generate trends analysis
-    // This would be expanded in a real implementation
-    const trendResults = {
-      monthlyTrends: {
-        byMonth: [
-          { month: '2024-01', totalClaims: 180, rejectedClaims: 28, rejectionRate: 15.56, totalAmount: 135000, paidAmount: 98500 },
-          { month: '2024-02', totalClaims: 195, rejectedClaims: 29, rejectionRate: 14.87, totalAmount: 146250, paidAmount: 107000 },
-          { month: '2024-03', totalClaims: 210, rejectedClaims: 30, rejectionRate: 14.29, totalAmount: 157500, paidAmount: 116000 },
-          { month: '2024-04', totalClaims: 226, rejectedClaims: 31, rejectionRate: 13.72, totalAmount: 169500, paidAmount: 126800 },
-          { month: '2024-05', totalClaims: 218, rejectedClaims: 33, rejectionRate: 15.14, totalAmount: 163500, paidAmount: 119750 },
-          { month: '2024-06', totalClaims: 221, rejectedClaims: 33, rejectionRate: 14.93, totalAmount: 165750, paidAmount: 121800 }
-        ]
-      },
-      payerTrends: [
-        { 
-          payer: 'Blue Cross Blue Shield', 
-          totalClaims: 425, 
-          rejectedClaims: 53, 
-          rejectionRate: 12.47,
-          totalAmount: 318750,
-          paidAmount: 246000,
-          averagePaidAmount: 578.82
-        },
-        { 
-          payer: 'UnitedHealthcare', 
-          totalClaims: 312, 
-          rejectedClaims: 48, 
-          rejectionRate: 15.38,
-          totalAmount: 234000,
-          paidAmount: 175500,
-          averagePaidAmount: 562.50
-        },
-        { 
-          payer: 'Aetna', 
-          totalClaims: 198, 
-          rejectedClaims: 32, 
-          rejectionRate: 16.16,
-          totalAmount: 148500,
-          paidAmount: 109500,
-          averagePaidAmount: 553.03
-        },
-        { 
-          payer: 'Cigna', 
-          totalClaims: 163, 
-          rejectedClaims: 23, 
-          rejectionRate: 14.11,
-          totalAmount: 122250,
-          paidAmount: 92000,
-          averagePaidAmount: 564.42
-        },
-        { 
-          payer: 'Medicare', 
-          totalClaims: 152, 
-          rejectedClaims: 28, 
-          rejectionRate: 18.42,
-          totalAmount: 114000,
-          paidAmount: 81500,
-          averagePaidAmount: 536.18
-        }
-      ],
-      overallTrend: {
-        claimVolumeChange: 22.78, // % increase from first to last month
-        rejectionRateChange: -4.05, // % decrease from first to last month
-        averageClaimAmountChange: 5.32 // % increase from first to last month
-      }
-    };
+    const trendResults = analyzeTrendPatterns(extractionResult);
     
     return new Response(
       JSON.stringify(trendResults),
@@ -101,4 +37,69 @@ export async function analyzeTrends(request) {
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
+}
+
+/**
+ * Analyze trends over time in insurance claims data
+ * @param {Array} data - The processed data rows
+ * @returns {Object} Trend analysis results
+ */
+export function analyzeTrendPatterns(data) {
+  if (!data || !data.length) {
+    return { monthlyTrends: [], payerTrends: [], overallTrend: {} };
+  }
+
+  // Calculate monthly trends
+  const monthlyTrends = d3.rollup(
+    data,
+    v => ({
+      totalClaims: v.length,
+      rejectedClaims: v.filter(row => row.claimStatus === 'Rejected').length,
+      rejectionRate: (v.filter(row => row.claimStatus === 'Rejected').length / v.length) * 100,
+      totalAmount: d3.sum(v, d => d.claimAmount || 0),
+      paidAmount: d3.sum(v, d => d.paidAmount || 0)
+    }),
+    d => d.claimDate.substring(0, 7) // Group by month
+  );
+
+  const monthlyTrendsArray = Array.from(monthlyTrends, ([month, stats]) => ({
+    month,
+    ...stats
+  })).sort((a, b) => new Date(a.month) - new Date(b.month));
+
+  // Calculate payer trends
+  const payerTrends = d3.rollup(
+    data,
+    v => ({
+      totalClaims: v.length,
+      rejectedClaims: v.filter(row => row.claimStatus === 'Rejected').length,
+      rejectionRate: (v.filter(row => row.claimStatus === 'Rejected').length / v.length) * 100,
+      totalAmount: d3.sum(v, d => d.claimAmount || 0),
+      paidAmount: d3.sum(v, d => d.paidAmount || 0),
+      averagePaidAmount: d3.mean(v, d => d.paidAmount || 0)
+    }),
+    d => d.payerName
+  );
+
+  const payerTrendsArray = Array.from(payerTrends, ([payer, stats]) => ({
+    payer,
+    ...stats
+  })).sort((a, b) => b.totalClaims - a.totalClaims);
+
+  // Calculate overall trend changes
+  const firstMonth = monthlyTrendsArray[0];
+  const lastMonth = monthlyTrendsArray[monthlyTrendsArray.length - 1];
+  const claimVolumeChange = ((lastMonth.totalClaims - firstMonth.totalClaims) / firstMonth.totalClaims) * 100;
+  const rejectionRateChange = lastMonth.rejectionRate - firstMonth.rejectionRate;
+  const averageClaimAmountChange = ((lastMonth.totalAmount / lastMonth.totalClaims) - (firstMonth.totalAmount / firstMonth.totalClaims)) / (firstMonth.totalAmount / firstMonth.totalClaims) * 100;
+
+  return {
+    monthlyTrends: monthlyTrendsArray,
+    payerTrends: payerTrendsArray,
+    overallTrend: {
+      claimVolumeChange,
+      rejectionRateChange,
+      averageClaimAmountChange
+    }
+  };
 }

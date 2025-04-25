@@ -22,7 +22,7 @@ The JavaScript implementation is optimized for deployment on Cloudflare Workers,
 ```bash
 # Clone the repository
 git clone https://github.com/BrainSAIT-LTD/Healthcare-Insurance-Data-Analysis-System.git
-cd Healthcare-Insurance-Data-Analysis-System/js-version
+cd Healthcare-Insurance-Data-Analysis-System
 
 # Install dependencies
 npm install
@@ -56,53 +56,6 @@ id = "your-kv-namespace-id"
 ```bash
 npm run deploy
 ```
-
-## Python Implementation (Legacy)
-
-The original Python implementation uses Streamlit for the web interface.
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/BrainSAIT-LTD/Healthcare-Insurance-Data-Analysis-System.git
-cd Healthcare-Insurance-Data-Analysis-System
-
-# Create a virtual environment
-python -m venv venv
-
-# Activate the virtual environment
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### Running the application
-
-```bash
-# Start the Streamlit app
-streamlit run app.py
-```
-
-## JavaScript vs Python Implementation
-
-### Advantages of JavaScript Implementation
-
-- **Lightweight**: Optimized for edge computing with minimal dependencies
-- **Fast performance**: Quick startup and response times
-- **Cloudflare Workers deployment**: Global edge distribution
-- **Lower operational costs**: Less resource intensive
-- **Simplified architecture**: Single unified codebase
-
-### When to use Python Implementation
-
-- **Local development**: When you need a quick local setup
-- **Complex data science tasks**: When you need to use specific Python libraries
-- **Legacy compatibility**: When integrating with other Python systems
 
 ## API Documentation
 

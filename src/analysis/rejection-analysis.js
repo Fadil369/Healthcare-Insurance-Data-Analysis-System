@@ -93,3 +93,77 @@ export async function analyzeRejections(request) {
     );
   }
 }
+
+/**
+ * Analyze rejection patterns in insurance claims data
+ * @param {Array} data - The processed data rows
+ * @returns {Object} Rejection analysis results
+ */
+export function analyzeRejectionPatterns(data) {
+  if (!data || !data.length) {
+    return { overallStats: {}, reasonsAnalysis: [], providersAnalysis: [], timeAnalysis: {} };
+  }
+
+  // Calculate overall statistics
+  const totalClaims = data.length;
+  const rejectedClaims = data.filter(row => row.claimStatus === 'Rejected').length;
+  const rejectionRate = (rejectedClaims / totalClaims) * 100;
+
+  // Analyze rejection reasons
+  const reasonsAnalysis = d3.rollup(
+    data.filter(row => row.claimStatus === 'Rejected'),
+    v => v.length,
+    d => d.rejectionReason
+  );
+
+  const reasonsAnalysisArray = Array.from(reasonsAnalysis, ([reason, count]) => ({
+    reason,
+    count,
+    percentage: (count / rejectedClaims) * 100
+  })).sort((a, b) => b.count - a.count);
+
+  // Analyze providers with highest rejection rates
+  const providersAnalysis = d3.rollup(
+    data.filter(row => row.claimStatus === 'Rejected'),
+    v => v.length,
+    d => d.providerName
+  );
+
+  const providersAnalysisArray = Array.from(providersAnalysis, ([provider, count]) => ({
+    provider,
+    rejectionCount: count,
+    percentage: (count / rejectedClaims) * 100,
+    topReasons: d3.rollup(
+      data.filter(row => row.claimStatus === 'Rejected' && row.providerName === provider),
+      v => v.length,
+      d => d.rejectionReason
+    )
+  })).sort((a, b) => b.rejectionCount - a.rejectionCount);
+
+  // Analyze rejection trends over time
+  const timeAnalysis = d3.rollup(
+    data.filter(row => row.claimStatus === 'Rejected'),
+    v => v.length,
+    d => d.claimDate.substring(0, 7) // Group by month
+  );
+
+  const timeAnalysisArray = Array.from(timeAnalysis, ([month, count]) => ({
+    month,
+    total: data.filter(row => row.claimDate.substring(0, 7) === month).length,
+    rejected: count,
+    rejectionRate: (count / data.filter(row => row.claimDate.substring(0, 7) === month).length) * 100
+  })).sort((a, b) => new Date(a.month) - new Date(b.month));
+
+  return {
+    overallStats: {
+      totalClaims,
+      rejectedClaims,
+      rejectionRate
+    },
+    reasonsAnalysis: reasonsAnalysisArray,
+    providersAnalysis: providersAnalysisArray,
+    timeAnalysis: {
+      byMonth: timeAnalysisArray
+    }
+  };
+}
