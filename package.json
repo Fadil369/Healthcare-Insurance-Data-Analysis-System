@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "test": "mocha"
   },
   "author": "BrainSAIT-LTD",
   "license": "GPL-3.0",
