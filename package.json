@@ -21,7 +21,7 @@
     "simple-statistics": "^7.8.3"
   },
   "devDependencies": {
-    "wrangler": "^3.13.1"
+    "wrangler": "^4.23.0"
   },
   "keywords": [
     "healthcare",
